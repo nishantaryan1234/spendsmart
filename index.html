@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SpendSmart — Expense Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=Instrument+Sans:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d0d0d;
+      --surface: #161616;
+      --surface2: #1e1e1e;
+      --border: #2a2a2a;
+      --text: #f0ede8;
+      --muted: #6b6b6b;
+      --accent: #c8f55a;
+      --accent-dark: #9dc437;
+      --accent-text: #0d0d0d;
+      --red: #ff5c5c;
+      --red-dim: #2a1515;
+      --amber: #ffc040;
+      --amber-dim: #2a1e00;
+      --green: #5cffa0;
+      --green-dim: #0d2a1a;
+      --blue: #5cc8ff;
+      --blue-dim: #0d1e2a;
+      --radius: 16px;
+      --radius-sm: 10px;
+    }
+
+    body {
+      font-family: 'Instrument Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 32px 16px 60px;
+    }
+
+    /* ── Layout ── */
+    .wrapper { max-width: 700px; margin: 0 auto; }
+
+    /* ── Header ── */
+    header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 32px;
+      animation: fadeUp 0.5s ease both;
+    }
+    .logo {
+      font-family: 'Syne', sans-serif;
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.5px;
+    }
+    .logo span { color: var(--accent); }
+    .header-sub {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 4px;
+      font-family: 'Syne', sans-serif;
+    }
+    .month-badge {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 99px;
+      padding: 6px 16px;
+      font-size: 12px;
+      color: var(--muted);
+      font-family: 'Syne', sans-serif;
+    }
+
+    /* ── Balance Hero ── */
+    .balance-hero {
+      background: var(--accent);
+      border-radius: var(--radius);
+      padding: 28px 28px 24px;
+      margin-bottom: 16px;
+      position: relative;
+      overflow: hidden;
+      animation: fadeUp 0.5s 0.1s ease both;
+    }
+    .balance-hero::before {
+      content: '';
+      position: absolute;
+      top: -40px; right: -40px;
+      width: 180px; height: 180px;
+      border-radius: 50%;
+      background: rgba(0,0,0,0.07);
+    }
+    .balance-label {
+      font-size: 12px;
+      font-family: 'Syne', sans-serif;
+      font-weight: 600;
+      color: rgba(0,0,0,0.5);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 6px;
+    }
+    .balance-amount {
+      font-family: 'Syne', sans-serif;
+      font-size: 42px;
+      font-weight: 700;
+      color: var(--accent-text);
+      letter-spacing: -2px;
+      line-height: 1;
+    }
+    .balance-amount .currency { font-size: 24px; vertical-align: top; margin-top: 6px; display: inline-block; }
+    .balance-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    .bal-stat {
+      background: rgba(0,0,0,0.1);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+    }
+    .bal-stat-label { font-size: 11px; color: rgba(0,0,0,0.5); font-family: 'Syne', sans-serif; }
+    .bal-stat-val { font-size: 18px; font-weight: 600; color: var(--accent-text); font-family: 'Syne', sans-serif; margin-top: 2px; }
+
+    /* ── Canvas Chart ── */
+    .chart-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 16px;
+      animation: fadeUp 0.5s 0.2s ease both;
+    }
+    .card-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 16px;
+    }
+    canvas { width: 100% !important; display: block; }
+
+    /* ── Form ── */
+    .form-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 16px;
+      animation: fadeUp 0.5s 0.3s ease both;
+    }
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-group.full { grid-column: 1 / -1; }
+    label {
+      font-size: 11px;
+      font-family: 'Syne', sans-serif;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    input[type="text"],
+    input[type="number"],
+    input[type="date"],
+    select {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      font-size: 14px;
+      font-family: 'Instrument Sans', sans-serif;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.2s;
+      width: 100%;
+    }
+    input:focus, select:focus { border-color: var(--accent); }
+    input:invalid:not(:placeholder-shown) { border-color: var(--red); }
+    input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.5); cursor: pointer; }
+    select option { background: var(--surface2); }
+
+    .btn-submit {
+      width: 100%;
+      padding: 12px;
+      background: var(--accent);
+      color: var(--accent-text);
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: 'Syne', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      letter-spacing: 0.5px;
+      transition: background 0.15s, transform 0.1s;
+    }
+    .btn-submit:hover { background: var(--accent-dark); }
+    .btn-submit:active { transform: scale(0.98); }
+
+    /* ── Expense List ── */
+    .list-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      animation: fadeUp 0.5s 0.4s ease both;
+    }
+    .list-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .filter-tabs {
+      display: flex;
+      gap: 6px;
+    }
+    .filter-tab {
+      font-size: 11px;
+      padding: 4px 12px;
+      border-radius: 99px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      font-family: 'Syne', sans-serif;
+      font-weight: 600;
+      transition: all 0.15s;
+    }
+    .filter-tab.active {
+      background: var(--accent);
+      color: var(--accent-text);
+      border-color: transparent;
+    }
+
+    /* ── Expense Items (Drag & Drop) ── */
+    .expense-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      margin-bottom: 8px;
+      cursor: grab;
+      transition: opacity 0.2s, transform 0.15s, border-color 0.15s;
+      animation: slideIn 0.2s ease;
+      user-select: none;
+    }
+    .expense-item:last-child { margin-bottom: 0; }
+    .expense-item:active { cursor: grabbing; }
+    .expense-item.dragging { opacity: 0.4; transform: scale(0.98); }
+    .expense-item.drag-over { border-color: var(--accent); }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(-8px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+
+    .cat-dot {
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+    .exp-body { flex: 1; min-width: 0; }
+    .exp-name {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .exp-meta { font-size: 11px; color: var(--muted); margin-top: 2px; font-family: 'Syne', sans-serif; }
+    .exp-amount {
+      font-family: 'Syne', sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .del-btn {
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      color: var(--muted);
+      font-size: 14px;
+      padding: 4px 6px;
+      border-radius: 6px;
+      transition: color 0.15s, background 0.15s;
+      flex-shrink: 0;
+    }
+    .del-btn:hover { color: var(--red); background: var(--red-dim); }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 0;
+      color: var(--muted);
+    }
+    .empty-state .icon { font-size: 36px; margin-bottom: 10px; }
+    .empty-state p { font-size: 14px; }
+
+    /* ── Validation tooltip ── */
+    .error-msg {
+      font-size: 11px;
+      color: var(--red);
+      font-family: 'Syne', sans-serif;
+      margin-top: 4px;
+      display: none;
+    }
+    .show-error .error-msg { display: block; }
+    .show-error input { border-color: var(--red); }
+
+    /* ── Footer ── */
+    footer {
+      margin-top: 32px;
+      text-align: center;
+      font-size: 11px;
+      color: var(--muted);
+      font-family: 'Syne', sans-serif;
+      letter-spacing: 0.5px;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── HTML5 drag highlight ── */
+    #drop-zone.drag-active {
+      outline: 2px dashed var(--accent);
+      outline-offset: 4px;
+      border-radius: var(--radius-sm);
+    }
+  </style>
+</head>
+<body>
+<div class="wrapper">
+
+  <!-- Header -->
+  <header>
+    <div>
+      <div class="logo">Spend<span>Smart</span></div>
+      <div class="header-sub">Personal Expense Tracker</div>
+    </div>
+    <div class="month-badge" id="month-badge"></div>
+  </header>
+
+  <!-- Balance Hero -->
+  <section class="balance-hero" aria-label="Balance summary">
+    <div class="balance-label">Total Balance</div>
+    <div class="balance-amount"><span class="currency">₹</span><span id="balance">0</span></div>
+    <div class="balance-row">
+      <div class="bal-stat">
+        <div class="bal-stat-label">Income</div>
+        <div class="bal-stat-val">₹<span id="total-income">0</span></div>
+      </div>
+      <div class="bal-stat">
+        <div class="bal-stat-label">Expenses</div>
+        <div class="bal-stat-val">₹<span id="total-expense">0</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HTML5 Canvas Chart -->
+  <article class="chart-card" aria-label="Spending chart">
+    <div class="card-title">Spending by Category</div>
+    <canvas id="chart" height="160"></canvas>
+  </article>
+
+  <!-- Add Expense Form (HTML5 Form Validation) -->
+  <section class="form-card" aria-label="Add transaction">
+    <div class="card-title">Add Transaction</div>
+    <form id="expense-form" novalidate>
+      <div class="form-grid">
+        <div class="form-group full" id="group-name">
+          <label for="exp-name">Description</label>
+          <input type="text" id="exp-name" placeholder="e.g. Grocery shopping" required minlength="2" />
+          <span class="error-msg">Please enter a description (min 2 chars)</span>
+        </div>
+        <div class="form-group" id="group-amount">
+          <label for="exp-amount">Amount (₹)</label>
+          <input type="number" id="exp-amount" placeholder="0.00" required min="1" step="0.01" />
+          <span class="error-msg">Enter a valid amount</span>
+        </div>
+        <div class="form-group">
+          <label for="exp-type">Type</label>
+          <select id="exp-type">
+            <option value="expense">Expense</option>
+            <option value="income">Income</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="exp-cat">Category</label>
+          <select id="exp-cat">
+            <option value="food">🍔 Food</option>
+            <option value="transport">🚌 Transport</option>
+            <option value="study">📚 Study</option>
+            <option value="health">💊 Health</option>
+            <option value="entertainment">🎮 Entertainment</option>
+            <option value="salary">💰 Salary / Income</option>
+            <option value="other">📦 Other</option>
+          </select>
+        </div>
+        <div class="form-group full" id="group-date">
+          <label for="exp-date">Date</label>
+          <input type="date" id="exp-date" required />
+          <span class="error-msg">Please select a date</span>
+        </div>
+      </div>
+      <button type="submit" class="btn-submit">+ Add Transaction</button>
+    </form>
+  </section>
+
+  <!-- Expense List (Drag & Drop) -->
+  <section class="list-card" aria-label="Transaction list">
+    <div class="list-header">
+      <div class="card-title" style="margin:0">Transactions</div>
+      <div class="filter-tabs">
+        <button class="filter-tab active" data-f="all">All</button>
+        <button class="filter-tab" data-f="expense">Expense</button>
+        <button class="filter-tab" data-f="income">Income</button>
+      </div>
+    </div>
+    <div id="drop-zone">
+      <div id="expense-list"></div>
+    </div>
+  </section>
+
+  <footer>spendsmart v1.0 &mdash; built with html5</footer>
+</div>
+
+<script>
+  /* ── Data ── */
+  const STORAGE_KEY = "spendsmart_v1";
+
+  function loadData() {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
+    catch { return []; }
+  }
+  function saveData() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(transactions));
+  }
+
+  let transactions = loadData();
+  if (!transactions.length) {
+    transactions = [
+      { id: 1, name: "Monthly Stipend",      amount: 5000, type: "income",  cat: "salary",        date: today() },
+      { id: 2, name: "Mess Fee",             amount: 1200, type: "expense", cat: "food",          date: today() },
+      { id: 3, name: "Bus Pass",             amount: 300,  type: "expense", cat: "transport",     date: today() },
+      { id: 4, name: "Udemy Course",         amount: 499,  type: "expense", cat: "study",         date: today() },
+      { id: 5, name: "Movie Night",          amount: 200,  type: "expense", cat: "entertainment", date: today() },
+    ];
+    saveData();
+  }
+
+  let nextId = Math.max(...transactions.map(t => t.id)) + 1;
+  let currentFilter = "all";
+  let dragSrcId = null;
+
+  /* ── Helpers ── */
+  function today() {
+    return new Date().toISOString().split("T")[0];
+  }
+  function fmt(n) {
+    return Number(n).toLocaleString("en-IN", { maximumFractionDigits: 0 });
+  }
+  function catMeta(cat) {
+    const map = {
+      food:          { emoji: "🍔", color: "#ff7043", bg: "#2a1200" },
+      transport:     { emoji: "🚌", color: "#42a5f5", bg: "#0d1e2a" },
+      study:         { emoji: "📚", color: "#ab47bc", bg: "#1a0d2a" },
+      health:        { emoji: "💊", color: "#5cffa0", bg: "#0d2a1a" },
+      entertainment: { emoji: "🎮", color: "#ffc040", bg: "#2a1e00" },
+      salary:        { emoji: "💰", color: "#c8f55a", bg: "#1a2a00" },
+      other:         { emoji: "📦", color: "#8a8880", bg: "#1e1e1e" },
+    };
+    return map[cat] || map.other;
+  }
+
+  /* ── Month badge ── */
+  document.getElementById("month-badge").textContent =
+    new Date().toLocaleDateString("en-IN", { month: "long", year: "numeric" });
+
+  /* ── Default date ── */
+  document.getElementById("exp-date").value = today();
+
+  /* ── Render stats ── */
+  function renderStats() {
+    const income  = transactions.filter(t => t.type === "income").reduce((s,t) => s + t.amount, 0);
+    const expense = transactions.filter(t => t.type === "expense").reduce((s,t) => s + t.amount, 0);
+    document.getElementById("balance").textContent       = fmt(income - expense);
+    document.getElementById("total-income").textContent  = fmt(income);
+    document.getElementById("total-expense").textContent = fmt(expense);
+  }
+
+  /* ── HTML5 Canvas Chart ── */
+  function renderChart() {
+    const canvas = document.getElementById("chart");
+    const ctx    = canvas.getContext("2d");
+    const W = canvas.offsetWidth || 660;
+    const H = 160;
+    canvas.width  = W;
+    canvas.height = H;
+    ctx.clearRect(0, 0, W, H);
+
+    const cats = ["food","transport","study","health","entertainment","other"];
+    const catColors = { food:"#ff7043", transport:"#42a5f5", study:"#ab47bc", health:"#5cffa0", entertainment:"#ffc040", other:"#8a8880" };
+    const totals = {};
+    cats.forEach(c => totals[c] = 0);
+    transactions.filter(t => t.type === "expense").forEach(t => {
+      const key = cats.includes(t.cat) ? t.cat : "other";
+      totals[key] += t.amount;
+    });
+
+    const max = Math.max(...Object.values(totals), 1);
+    const barW = Math.floor((W - 40) / cats.length) - 10;
+    const pad  = 20;
+
+    cats.forEach((cat, i) => {
+      const val  = totals[cat];
+      const barH = Math.round((val / max) * (H - 50));
+      const x    = pad + i * (barW + 10);
+      const y    = H - 30 - barH;
+
+      ctx.fillStyle = catColors[cat] + "33";
+      ctx.beginPath();
+      ctx.roundRect(x, H - 30, barW, -Math.max(barH, 4), 4);
+      ctx.fill();
+
+      ctx.fillStyle = catColors[cat];
+      ctx.beginPath();
+      ctx.roundRect(x, y, barW, Math.max(barH, 4), 4);
+      ctx.fill();
+
+      ctx.fillStyle = "#6b6b6b";
+      ctx.font = "10px Syne, sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText(cat.slice(0,4), x + barW / 2, H - 10);
+
+      if (val > 0) {
+        ctx.fillStyle = "#f0ede8";
+        ctx.font = "bold 11px Syne, sans-serif";
+        ctx.fillText("₹" + fmt(val), x + barW / 2, y - 6);
+      }
+    });
+  }
+
+  /* ── Render list ── */
+  function renderList() {
+    const list = document.getElementById("expense-list");
+    const filtered = transactions.filter(t =>
+      currentFilter === "all" ? true : t.type === currentFilter
+    );
+
+    if (!filtered.length) {
+      list.innerHTML = `<div class="empty-state"><div class="icon">💸</div><p>No transactions yet — add one above.</p></div>`;
+      return;
+    }
+
+    list.innerHTML = filtered.map(t => {
+      const m   = catMeta(t.cat);
+      const neg = t.type === "expense";
+      const amtColor = neg ? "#ff5c5c" : "#5cffa0";
+      const sign     = neg ? "−" : "+";
+      const formattedDate = new Date(t.date + "T00:00:00").toLocaleDateString("en-IN", { day:"numeric", month:"short" });
+      return `
+        <div class="expense-item" draggable="true" data-id="${t.id}"
+             ondragstart="onDragStart(event)" ondragover="onDragOver(event)"
+             ondrop="onDrop(event)" ondragend="onDragEnd(event)">
+          <div class="cat-dot" style="background:${m.bg}; color:${m.color}; font-size:18px">${m.emoji}</div>
+          <div class="exp-body">
+            <div class="exp-name">${escHtml(t.name)}</div>
+            <div class="exp-meta">${t.cat} · ${formattedDate}</div>
+          </div>
+          <div class="exp-amount" style="color:${amtColor}">${sign}₹${fmt(t.amount)}</div>
+          <button class="del-btn" onclick="deleteItem(${t.id})" aria-label="Delete transaction">✕</button>
+        </div>`;
+    }).join("");
+  }
+
+  function render() {
+    renderStats();
+    renderChart();
+    renderList();
+  }
+
+  /* ── Form submit (HTML5 Validation) ── */
+  document.getElementById("expense-form").addEventListener("submit", function(e) {
+    e.preventDefault();
+    let valid = true;
+
+    const nameEl   = document.getElementById("exp-name");
+    const amtEl    = document.getElementById("exp-amount");
+    const dateEl   = document.getElementById("exp-date");
+    const groupN   = document.getElementById("group-name");
+    const groupA   = document.getElementById("group-amount");
+    const groupD   = document.getElementById("group-date");
+
+    groupN.classList.remove("show-error");
+    groupA.classList.remove("show-error");
+    groupD.classList.remove("show-error");
+
+    if (!nameEl.value.trim() || nameEl.value.trim().length < 2) {
+      groupN.classList.add("show-error"); valid = false;
+    }
+    if (!amtEl.value || Number(amtEl.value) <= 0) {
+      groupA.classList.add("show-error"); valid = false;
+    }
+    if (!dateEl.value) {
+      groupD.classList.add("show-error"); valid = false;
+    }
+    if (!valid) return;
+
+    transactions.unshift({
+      id:     nextId++,
+      name:   nameEl.value.trim(),
+      amount: parseFloat(amtEl.value),
+      type:   document.getElementById("exp-type").value,
+      cat:    document.getElementById("exp-cat").value,
+      date:   dateEl.value
+    });
+    saveData();
+
+    nameEl.value  = "";
+    amtEl.value   = "";
+    dateEl.value  = today();
+    render();
+  });
+
+  /* ── Filters ── */
+  document.querySelectorAll(".filter-tab").forEach(btn => {
+    btn.addEventListener("click", () => {
+      currentFilter = btn.dataset.f;
+      document.querySelectorAll(".filter-tab").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      renderList();
+    });
+  });
+
+  /* ── Delete ── */
+  function deleteItem(id) {
+    transactions = transactions.filter(t => t.id !== id);
+    saveData();
+    render();
+  }
+
+  /* ── HTML5 Drag & Drop (reorder) ── */
+  function onDragStart(e) {
+    dragSrcId = parseInt(e.currentTarget.dataset.id);
+    e.currentTarget.classList.add("dragging");
+    e.dataTransfer.effectAllowed = "move";
+  }
+  function onDragOver(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    document.querySelectorAll(".expense-item").forEach(el => el.classList.remove("drag-over"));
+    e.currentTarget.classList.add("drag-over");
+  }
+  function onDrop(e) {
+    e.preventDefault();
+    const targetId = parseInt(e.currentTarget.dataset.id);
+    if (dragSrcId === targetId) return;
+    const srcIdx = transactions.findIndex(t => t.id === dragSrcId);
+    const tgtIdx = transactions.findIndex(t => t.id === targetId);
+    const [moved] = transactions.splice(srcIdx, 1);
+    transactions.splice(tgtIdx, 0, moved);
+    saveData();
+    renderList();
+  }
+  function onDragEnd(e) {
+    document.querySelectorAll(".expense-item").forEach(el => {
+      el.classList.remove("dragging");
+      el.classList.remove("drag-over");
+    });
+  }
+
+  /* ── Escape HTML ── */
+  function escHtml(str) {
+    return String(str).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  }
+
+  /* ── Init ── */
+  render();
+  window.addEventListener("resize", renderChart);
+</script>
+</body>
+</html>
